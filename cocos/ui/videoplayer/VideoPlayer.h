@@ -171,6 +171,9 @@ class VideoPlayer : public Ref
      * Set the rect of VideoPlayer.
      */
     virtual void setFrame(float x, float y, float width, float height);
+
+    //kennys
+    virtual void swapUpToCanvas() const;
     
   protected:
 

@@ -74,6 +74,7 @@ public class Cocos2dxVideoHelper {
     private final static int VideoTaskKeepRatio = 11;
     private final static int VideoTaskFullScreen = 12;
     private final static int VideoTaskSetVolume = 13;
+    private final static int VideoSwapUpToCanvas = 99;  //kennys video 相关
 
     final static int KeyEventBack = 1000;
 
@@ -119,6 +120,11 @@ public class Cocos2dxVideoHelper {
             }
             case VideoTaskPause: {
                 helper._pauseVideo(msg.arg1);
+                break;
+            }
+
+            case VideoSwapUpToCanvas: { //kennys video 相关
+                helper._swapUpToCanvas(msg.arg1);
                 break;
             }
 
@@ -205,7 +211,7 @@ public class Cocos2dxVideoHelper {
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT);
         mLayout.addView(videoView, lParams);
-        videoView.setZOrderOnTop(true);
+        // videoView.setZOrderOnTop(true);  //kennys video相关
         videoView.setVideoViewEventListener(videoEventListener);
     }
 
@@ -335,6 +341,24 @@ public class Cocos2dxVideoHelper {
         Cocos2dxVideoView videoView = sVideoViews.get(index);
         if (videoView != null) {
             videoView.stop();
+        }
+    }
+
+    //kennys video 相关
+    public static void swapUpToCanvas(int index) {  
+        Message msg = new Message();
+        msg.what = VideoSwapUpToCanvas;
+        msg.arg1 = index;
+        mVideoHandler.sendMessage(msg);
+    }
+
+    //kennys video 相关
+    private void _swapUpToCanvas(int index) {
+        Cocos2dxVideoView view = sVideoViews.get(index);
+        Log.d("cocosswap", "swapUpToCanvas: start");
+        if (view != null) {
+            Log.d("cocosswap", "swapUpToCanvas: success");
+            view.setZOrderOnTop(false);
         }
     }
 

@@ -293,4 +293,10 @@ void VideoPlayer::update() {
     //test
 }
 
+//kennys
+void VideoPlayer::swapUpToCanvas() const
+{
+    JniHelper::callStaticVoidMethod(videoHelperClassName, "swapUpToCanvas", _videoPlayerIndex);
+}
+
 #endif

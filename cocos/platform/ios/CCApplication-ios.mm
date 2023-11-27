@@ -106,10 +106,38 @@ namespace
     cocos2d::Device::Rotation rotation = cocos2d::Device::Rotation::_0;
     UIDevice * device = [UIDevice currentDevice];
     
+
+    //横竖屏切换适配 kennys  start
+    auto orientation = UIDeviceOrientationLandscapeRight;
+    
+    if (@available(iOS 16.0, *)) {
+        // iOS16 需要使用 UIWindowScene 来区分横竖屏
+        NSArray *array = [[[UIApplication sharedApplication] connectedScenes] allObjects];
+        UIWindowScene *scene = [array firstObject];
+        
+        if (scene.interfaceOrientation == UIInterfaceOrientationPortrait) {
+            orientation = UIDeviceOrientationPortrait;
+        } else if (scene.interfaceOrientation == UIInterfaceOrientationLandscapeLeft) {
+            orientation = UIDeviceOrientationLandscapeLeft;
+        } else if (scene.interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown) {
+            orientation = UIDeviceOrientationPortraitUpsideDown;
+        } else if (scene.interfaceOrientation == UIInterfaceOrientationLandscapeRight) {
+            orientation = UIDeviceOrientationLandscapeRight;
+        }
+
+    } else {
+        // 这里是 UIDeviceOrientationLandscapeLeft（我们需要 Home 按键在右边）
+        // UIDeviceOrientationLandscapeLeft,       // Device oriented horizontally, home button on the right
+        orientation = device.orientation;
+    }
+    //横竖屏切换适配 kennys  end
+
     // NOTE: https://developer.apple.com/documentation/uikit/uideviceorientation
     // when the device rotates to LandscapeLeft, device.orientation returns UIDeviceOrientationLandscapeRight
     // when the device rotates to LandscapeRight, device.orientation returns UIDeviceOrientationLandscapeLeft
-    switch(device.orientation)
+    
+    // switch(device.orientation) //kennys
+    switch(orientation)
     {
         case UIDeviceOrientationPortrait:
             rotation = cocos2d::Device::Rotation::_0;

@@ -62,6 +62,23 @@ static bool js_video_VideoPlayer_duration(se::State& s)
 }
 SE_BIND_FUNC(js_video_VideoPlayer_duration)
 
+//kennys start
+static bool js_video_VideoPlayer_swapUpToCanvasApp(se::State& s)
+{
+cocos2d::VideoPlayer* cobj = (cocos2d::VideoPlayer*)s.nativeThisObject();
+SE_PRECONDITION2(cobj, false, "js_cocos2d_VideoPlayer_swapUpToCanvas : Invalid Native Object");
+const auto& args = s.args();
+size_t argc = args.size();
+if (argc == 0) {
+cobj->swapUpToCanvas();
+return true;
+}
+SE_REPORT_ERROR("wrong number of arguments: %d, was expecting %d", (int)argc, 0);
+return false;
+}
+SE_BIND_FUNC(js_video_VideoPlayer_swapUpToCanvasApp)
+//kennys end
+
 static bool js_video_VideoPlayer_pause(se::State& s)
 {
     cocos2d::VideoPlayer* cobj = (cocos2d::VideoPlayer*)s.nativeThisObject();
@@ -492,6 +509,12 @@ bool js_register_video_VideoPlayer(se::Object* obj)
     cls->defineFunction("setFrame", _SE(js_video_VideoPlayer_setFrame));
     cls->defineFunction("setVisible", _SE(js_video_VideoPlayer_setVisible));
     cls->defineFunction("destroy", _SE(js_cocos2d_VideoPlayer_destroy));
+
+    //kennys start
+    cocos2d::log("swapUpToCanvasApp init");
+    cls->defineFunction("swapUpToCanvasApp", _SE(js_video_VideoPlayer_swapUpToCanvasApp));
+    //kennys end
+    
     cls->defineFinalizeFunction(_SE(js_cocos2d_VideoPlayer_finalize));
     cls->install();
     JSBClassType::registerClass<cocos2d::VideoPlayer>(cls);

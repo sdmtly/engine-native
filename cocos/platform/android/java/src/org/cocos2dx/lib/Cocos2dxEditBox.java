@@ -257,9 +257,12 @@ public class Cocos2dxEditBox {
                         }
                     }
 
-                    if (Cocos2dxEditText.this.mTopMargin == 0 && r.bottom != getRootView().getHeight()) {
-                        Cocos2dxEditText.this.setTopMargin(r.bottom);
-                    }
+                    // kennys 修复 android 输入框被遮挡的bug start
+                    // if (Cocos2dxEditText.this.mTopMargin == 0 && r.bottom != getRootView().getHeight()) {
+                    //     Cocos2dxEditText.this.setTopMargin(r.bottom);
+                    // }
+                    Cocos2dxEditText.this.setTopMargin(r.bottom);
+                    // kennys 修复 android 输入框被遮挡的bug end
                 }
             });
         }
@@ -373,7 +376,7 @@ public class Cocos2dxEditBox {
 
 
     private void hide() {
-        Utils.hideVirtualButton();
+        // Utils.hideVirtualButton();      //去掉隐藏导航栏，跟随系统 by kennys
         mEditText.hide();
         mButtonLayout.setVisibility(View.INVISIBLE);
         this.closeKeyboard();

@@ -286,6 +286,12 @@ typedef NS_ENUM(NSInteger, PlayerbackState) {
 -(void) setKeepRatioEnabled:(BOOL)enabled
 {
     _keepRatioEnabled = enabled;
+
+    //kennys 修复 ios 视屏再ipad下被裁切的bug start 
+    self.playerController.videoGravity = AVLayerVideoGravityResizeAspect;
+    return;
+    //kennys end
+    
     if (_keepRatioEnabled)
         self.playerController.videoGravity = AVLayerVideoGravityResizeAspectFill;
     else
@@ -412,8 +418,17 @@ typedef NS_ENUM(NSInteger, PlayerbackState) {
 }
 
 -(void)addPlayerControllerSubView {
-    auto eaglview = (CCEAGLView*)cocos2d::Application::getInstance()->getView();
-    [eaglview addSubview:self.playerController.view];
+    // kennys 修复 视屏播放一会后，ui层级又到视屏层级下面去了的bug start
+//    auto eaglview = (CCEAGLView*)cocos2d::Application::getInstance()->getView();
+//    [eaglview addSubview:self.playerController.view];
+    [self swapUpToCanvas];
+     // kennys 修复 视屏播放一会后，ui层级又到视屏层级下面去了的bug end
+}
+
+//kennys
+-(void)swapUpToCanvas{
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    [[window viewWithTag:10] addSubview:self.playerController.view];
 }
 
 @end
