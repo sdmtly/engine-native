@@ -282,7 +282,7 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
             
             // https://developer.android.com/training/system-ui/immersive
             int flag = //View.SYSTEM_UI_FLAG_HIDE_NAVIGATION        //去掉隐藏导航栏，跟随系统 by kennys
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                     View.SYSTEM_UI_FLAG_FULLSCREEN
                     //| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION  //去掉隐藏导航栏，跟随系统 by kennys
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;

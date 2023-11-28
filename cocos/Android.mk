@@ -7,6 +7,8 @@ LOCAL_MODULE_FILENAME := libcocos2d
 
 LOCAL_ARM_MODE := arm
 
+LOCAL_CPP_EXTENSION := .hpp .cpp .cc
+
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 MATHNEONFILE := math/MathUtil.cpp.neon
 else
@@ -88,7 +90,6 @@ scripting/js-bindings/event/EventDispatcher.cpp \
 ../external/sources/ConvertUTF/ConvertUTFWrapper.cpp \
 ../external/sources/ConvertUTF/ConvertUTF.c \
 ../external/sources/edtaa3func/edtaa3func.cpp \
-../external/sources/edtaa3func/edtaa3func.h \
 ui/edit-box/EditBox-android.cpp \
 2d/CCFontAtlas.cpp \
 2d/CCFontFreetype.cpp \
