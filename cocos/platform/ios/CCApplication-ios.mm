@@ -163,6 +163,17 @@ namespace
     float scale = [[UIScreen mainScreen] scale];
     float width = bounds.size.width * scale;
     float height = bounds.size.height * scale;
+    
+    //验证是否横竖屏,因为可能会收到错误的信息，因此需要验证 kennys start
+    if (width > height && (orientation == UIDeviceOrientationPortrait || orientation == UIDeviceOrientationPortraitUpsideDown)) {
+        return;
+    }
+    
+    if (height > width && (orientation == UIDeviceOrientationLandscapeLeft || orientation == UIDeviceOrientationLandscapeRight)) {
+        return;
+    }
+    //验证是否横竖屏 kennys end
+    
     cocos2d::Application::getInstance()->updateViewSize(width, height);
 }
 
@@ -486,7 +497,7 @@ void Application::setMultitouch(bool value)
 
 void Application::onCreateView(PixelFormat& pixelformat, DepthFormat& depthFormat, int& multisamplingCount)
 {
-    pixelformat = PixelFormat::RGB565;
+    pixelformat = PixelFormat::RGBA8;//PixelFormat::RGB565;  kennys
     depthFormat = DepthFormat::DEPTH24_STENCIL8;
 
     multisamplingCount = 0;
