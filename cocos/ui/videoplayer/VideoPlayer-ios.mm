@@ -643,4 +643,9 @@ void VideoPlayer::setShowRawFrame(bool show) const
         [((UIVideoViewWrapperIos*)_videoView) setShowRaw: NO];
 }
 
+//kennys
+void VideoPlayer::swapUpToCanvas() const{
+    [((UIVideoViewWrapperIos*)_videoView) swapUpToCanvas];
+}
+
 #endif
