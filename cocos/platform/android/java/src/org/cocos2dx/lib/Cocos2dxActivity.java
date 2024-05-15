@@ -271,31 +271,34 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
         mEditBox = new Cocos2dxEditBox(this, mFrameLayout);
 
         // Set frame layout as the content view
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(mFrameLayout);
 
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        try {
-            Field field = lp.getClass().getField("layoutInDisplayCutoutMode");
-            //Field constValue = lp.getClass().getDeclaredField("LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER");
-            Field constValue = lp.getClass().getDeclaredField("LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES");
-            field.setInt(lp, constValue.getInt(null));
-            
-            // https://developer.android.com/training/system-ui/immersive
-            int flag = //View.SYSTEM_UI_FLAG_HIDE_NAVIGATION        //去掉隐藏导航栏，跟随系统 by kennys
-                     View.SYSTEM_UI_FLAG_FULLSCREEN
-                    //| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION  //去掉隐藏导航栏，跟随系统 by kennys
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-
-            flag |= View.class.getDeclaredField("SYSTEM_UI_FLAG_IMMERSIVE_STICKY").getInt(null);
-            View view = getWindow().getDecorView();
-            view.setSystemUiVisibility(flag);
-
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
+//        WindowManager.LayoutParams lp = getWindow().getAttributes();
+//        try {
+//            Field field = lp.getClass().getField("layoutInDisplayCutoutMode");
+//            //Field constValue = lp.getClass().getDeclaredField("LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER");
+//            Field constValue = lp.getClass().getDeclaredField("LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES");
+//            field.setInt(lp, constValue.getInt(null));
+//
+//            // https://developer.android.com/training/system-ui/immersive
+//            int flag = //View.SYSTEM_UI_FLAG_HIDE_NAVIGATION        //去掉隐藏导航栏，跟随系统 by kennys
+//                     View.SYSTEM_UI_FLAG_FULLSCREEN
+//                    //| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION  //去掉隐藏导航栏，跟随系统 by kennys
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+//
+//            flag |= View.class.getDeclaredField("SYSTEM_UI_FLAG_IMMERSIVE_STICKY").getInt(null);
+//            View view = getWindow().getDecorView();
+//            view.setSystemUiVisibility(flag);
+//
+//        } catch (NoSuchFieldException e) {
+//            e.printStackTrace();
+//        } catch (IllegalAccessException e) {
+//            e.printStackTrace();
+//        }
 
         if (getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_SENSOR) {
             mCocos2dxOrientationHelper = new Cocos2dxOrientationHelper(this);
