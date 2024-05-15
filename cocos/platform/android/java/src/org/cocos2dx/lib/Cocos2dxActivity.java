@@ -272,9 +272,33 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
 
         // Set frame layout as the content view
 
+
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+                    | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(Color.TRANSPARENT);
+        }
+
+//        Window window = getWindow();
+////这一步最好要做，因为如果这两个flag没有清除的话下面没有生效
+//        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+//                | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+//        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+//        window.setStatusBarColor(Color.TRANSPARENT);
+//        window.setNavigationBarColor(Color.TRANSPARENT);
+
 
         setContentView(mFrameLayout);
+
+//        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
+//            // 设置Window状态栏全透明
+//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//        }
 
 //        WindowManager.LayoutParams lp = getWindow().getAttributes();
 //        try {
