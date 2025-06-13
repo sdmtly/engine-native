@@ -468,7 +468,7 @@ bool Application::openURL(const std::string &url)
 }
 
 void Application::copyTextToClipboard(const std::string &text)
-{
+{	
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     pasteboard.string = [NSString stringWithCString:text.c_str() encoding:NSUTF8StringEncoding];
 }
