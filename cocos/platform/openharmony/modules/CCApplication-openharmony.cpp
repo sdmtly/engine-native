@@ -89,13 +89,12 @@ void Application::start()
 
 void Application::restart()
 {
-    // restartJSVM();
+    OpenHarmonyPlatform::getInstance()->restartJSVM();
 }
 
 void Application::end()
 {
-    int32_t value;
-    NapiHelper::napiCallFunction("terminateProcess", &value);
+    NapiHelper::napiCallFunction("terminateProcess");
 }
 
 void Application::setMultitouch(bool /*value*/)
@@ -121,7 +120,8 @@ void Application::onResume()
 void Application::setPreferredFramesPerSecond(int fps)
 {
     _fps = fps;
-    // setPreferredFramesPerSecondJNI(_fps);
+    cocos2d::OpenHarmonyPlatform* platform = cocos2d::OpenHarmonyPlatform::getInstance();
+    platform->setPreferedFramePersecond(_fps);
 }
 
 bool Application::isDisplayStats() {
@@ -141,7 +141,10 @@ void Application::setDisplayStats(bool isShow) {
 
 std::string Application::getCurrentLanguageCode() const {
     std::string str;
-    NapiHelper::napiCallFunction<std::string>("getSystemLanguage", &str);
+    auto ret = NapiHelper::napiCallFunction("getSystemLanguage");
+    if (ret.IsString()) {
+        str = ret.As<Napi::String>().Utf8Value();
+    }
     std::string::size_type pos = str.find('-');
     if(pos != std::string::npos) {
         str = str.substr(0, pos);
@@ -256,7 +259,12 @@ void Application::onCreateView(PixelFormat& /*pixelformat*/, DepthFormat& /*dept
 
 bool Application::openURL(const std::string &url)
 {
-    return false;
+    try {
+        NapiHelper::napiCallFunction("openUrl", url);
+    } catch(std::exception& e) {
+        return false;
+    }
+    return true;
 }
 
 void Application::copyTextToClipboard(const std::string &text)
@@ -268,7 +276,10 @@ void Application::copyTextToClipboard(const std::string &text)
 std::string Application::getSystemVersion()
 {
     std::string str;
-    NapiHelper::napiCallFunction<std::string>("getOSFullName", &str);
+    auto ret = NapiHelper::napiCallFunction("getOSFullName");
+    if (ret.IsString()) {
+        str = ret.As<Napi::String>().Utf8Value();
+    }
     return str;
 }
 

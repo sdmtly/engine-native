@@ -49,17 +49,19 @@ typedef struct _TrackEntryListeners {
 } _TrackEntryListeners;
 
 void animationCallback (AnimationState* state, EventType type, TrackEntry* entry, Event* event) {
-    ((SkeletonAnimation*)state->getRendererObject())->onAnimationStateEvent(entry, type, event);
+    auto *skeletonAnimation = static_cast<SkeletonAnimation *>(state->getRendererObject());
+    skeletonAnimation->cacheAnimationEvent(entry, type, event);
+    if (type == EventType::EventType_Dispose) {
+         /**
+         * In the official implementation of Spine's AnimationState class, the animationCallback is invoked after the trackEntryCallback. 
+         * After the AnimationState completes the EventType_Dispose callback, the TrackEntry will be reclaimed, so this event must be dispatched immediately.
+         */
+        skeletonAnimation->dispatchEvents();
+    }
 }
 
 void trackEntryCallback (AnimationState* state, EventType type, TrackEntry* entry, Event* event) {
-    ((SkeletonAnimation*)state->getRendererObject())->onTrackEntryEvent(entry, type, event);
-    if (type == EventType_Dispose) {
-        if (entry->getRendererObject()) {
-            delete (spine::_TrackEntryListeners*)entry->getRendererObject();
-            entry->setRendererObject(NULL);
-        }
-    }
+    ((SkeletonAnimation*)state->getRendererObject())->cacheTrackEvent(entry, type, event);
 }
 
 static _TrackEntryListeners* getListeners (TrackEntry* entry) {
@@ -73,6 +75,33 @@ static _TrackEntryListeners* getListeners (TrackEntry* entry) {
 float SkeletonAnimation::GlobalTimeScale = 1.0f;
 void SkeletonAnimation::setGlobalTimeScale(float timeScale) {
     GlobalTimeScale = timeScale;
+}
+
+void SkeletonAnimation::cacheAnimationEvent(TrackEntry *entry, EventType type, Event *event) {
+    CacheEventInfo info;
+    info.type = type;
+    info.entry = entry;
+    info.event = event;
+    _vecAnimationEvents.push_back(std::move(info));
+}
+
+void SkeletonAnimation::cacheTrackEvent(TrackEntry *entry, EventType type, Event *event) {
+    CacheEventInfo info;
+    info.type = type;
+    info.entry = entry;
+    info.event = event;
+    _vecTrackEvents.push_back(std::move(info));
+}
+
+void SkeletonAnimation::dispatchEvents() {
+    auto animationEvents = std::move(_vecAnimationEvents);
+    auto trackEvents = std::move(_vecTrackEvents);
+    for (const auto& info : animationEvents) {
+        onAnimationStateEvent(info.entry, info.type, info.event);
+    }
+    for (const auto& info : trackEvents) {
+        onTrackEntryEvent(info.entry, info.type, info.event);
+    }
 }
 
 SkeletonAnimation* SkeletonAnimation::create() {
@@ -127,9 +156,15 @@ void SkeletonAnimation::initialize () {
 
 SkeletonAnimation::SkeletonAnimation ()
 : SkeletonRenderer() {
+    _vecAnimationEvents.reserve(EventType::EventType_Event + 1);
+    _vecTrackEvents.reserve(EventType::EventType_Event + 1);
 }
 
 SkeletonAnimation::~SkeletonAnimation () {
+    SkeletonAnimation::destroy();
+}
+
+void SkeletonAnimation::destroy() {
     _startListener = nullptr;
     _interruptListener = nullptr;
     _endListener = nullptr;
@@ -139,9 +174,12 @@ SkeletonAnimation::~SkeletonAnimation () {
 
     if (_state) {
         clearTracks();
-        if (_ownsAnimationStateData) delete _state->getData();
-        delete _state;
+        if (_ownsAnimationStateData) {
+            delete _state->getData();
+        }
+        CC_SAFE_DELETE(_state);
     }
+    SkeletonRenderer::destroy();
 }
 
 void SkeletonAnimation::update (float deltaTime) {
@@ -153,6 +191,7 @@ void SkeletonAnimation::update (float deltaTime) {
         _state->apply(*_skeleton);
         _skeleton->updateWorldTransform();
     }
+    dispatchEvents();
 }
 
 void SkeletonAnimation::setAnimationStateData (AnimationStateData* stateData) {
@@ -288,6 +327,12 @@ void SkeletonAnimation::onTrackEntryEvent (TrackEntry* entry, EventType type, Ev
     case EventType_Event:
         if (listeners->eventListener) listeners->eventListener(entry, event);
         break;
+    }
+    if (type == EventType_Dispose) {
+        if (entry->getRendererObject()) {
+            delete (spine::_TrackEntryListeners*)entry->getRendererObject();
+            entry->setRendererObject(NULL);
+        }
     }
 }
 

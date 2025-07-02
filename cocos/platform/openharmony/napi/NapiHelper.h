@@ -25,150 +25,224 @@
 
 #pragma once
 
-#include <napi/native_api.h>
-#include <uv.h>
-#include "scripting/js-bindings/jswrapper/SeApi.h"
-#include "scripting/js-bindings/manual/jsb_conversions.hpp"
+#include "HelperMacros.h"
+#define NODE_ADDON_API_ENABLE_TYPE_CHECK_ON_AS 1
+#define NAPI_DISABLE_CPP_EXCEPTIONS            1
+#define NODE_ADDON_API_DISABLE_DEPRECATED      1
+#include "napi.h"
+#include "NapiValueConverter.h"
 
 namespace cocos2d {
+using CallbackParamType = std::variant<std::string, double, bool>;
+
+struct CallParam {
+    bool isSync;
+    std::function<void(CallbackParamType)> cb;
+    std::string paramStr;
+    char *module_info;
+    const char *clsPath;
+    const char *method;
+};
 
 class NapiHelper {
 public:
-
-    static napi_value getContext(napi_env env, napi_callback_info info);
-    // APP Lifecycle
-    static napi_value napiOnCreate(napi_env env, napi_callback_info info);
-    static napi_value napiOnShow(napi_env env, napi_callback_info info);
-    static napi_value napiOnHide(napi_env env, napi_callback_info info);
-    static napi_value napiOnDestroy(napi_env env, napi_callback_info info);
-    static napi_value napiOnBackPress(napi_env env, napi_callback_info info);
-
-    // JS Page : Lifecycle
-    static napi_value napiOnPageShow(napi_env env, napi_callback_info info);
-    static napi_value napiOnPageHide(napi_env env, napi_callback_info info);
-
-    // Worker Func
-    static napi_value napiWorkerInit(napi_env env, napi_callback_info info);
-    static napi_value napiASend(napi_env env, napi_callback_info info);
-    static napi_value napiNativeEngineInit(napi_env env, napi_callback_info info);
-    static napi_value napiNativeEngineStart(napi_env env, napi_callback_info info);
-
-    static napi_value napiWritablePathInit(napi_env env, napi_callback_info info);
-    static napi_value napiResourceManagerInit(napi_env env, napi_callback_info info);
-
-    static napi_value napiOnDisplayChange(napi_env env, napi_callback_info info);
-
-    template <class ReturnType>
-    static napi_value napiCallFunction(const std::string& functionName, ReturnType* value) {
-        if (!se::ScriptEngine::getInstance()->isValid()) {
-            return nullptr;
-        }
-        se::Value tickVal;
-        se::AutoHandleScope scope;
-        if (tickVal.isUndefined()) {
-            se::ScriptEngine::getInstance()->getGlobalObject()->getProperty(functionName, &tickVal);
-        }
-        se::Value rval;
-        se::ValueArray tickArgsValArr(1);
-        if (!tickVal.isUndefined()) {
-            tickVal.toObject()->call(tickArgsValArr, nullptr, &rval);
-        }
-        if(rval.isNullOrUndefined()) {
-            return nullptr;
-        }
-        bool ok = true;
-        ok &= seval_to_native_base_type(rval, value);
-        SE_PRECONDITION2(ok, nullptr, "Error processing arguments");
-        return nullptr;
-    }
-
-    static napi_value napiCallFunctionByStrArgs(const std::string& functionName, const std::string& args1, int32_t* value) {
-        if (!se::ScriptEngine::getInstance()->isValid()) {
-            return nullptr;
-        }
-        se::Value tickVal;
-        se::AutoHandleScope scope;
-        if (tickVal.isUndefined()) {
-            se::ScriptEngine::getInstance()->getGlobalObject()->getProperty(functionName, &tickVal);
-        }
-        se::Value rval;
-        se::ValueArray tickArgsValArr;
-        tickArgsValArr.push_back(se::Value(args1));
-        if (!tickVal.isUndefined()) {
-            tickVal.toObject()->call(tickArgsValArr, nullptr, &rval);
-        }
-        if(rval.isNullOrUndefined()) {
-            return nullptr;
-        }
-        bool ok = true;
-        ok &= seval_to_native_base_type(rval, value);
-        SE_PRECONDITION2(ok, nullptr, "Error processing arguments");
-        return nullptr;
-    }
-
-    static napi_value napiCallFunctionByFloatArgs(const std::string& functionName, float& sec, int32_t* value) {
-        if (!se::ScriptEngine::getInstance()->isValid()) {
-            return nullptr;
-        }
-        se::Value tickVal;
-        se::AutoHandleScope scope;
-        if (tickVal.isUndefined()) {
-            se::ScriptEngine::getInstance()->getGlobalObject()->getProperty(functionName, &tickVal);
-        }
-        se::Value rval;
-        se::ValueArray tickArgsValArr;
-        tickArgsValArr.push_back(se::Value(sec));
-        if (!tickVal.isUndefined()) {
-            tickVal.toObject()->call(tickArgsValArr, nullptr, &rval);
-        }
-        if(rval.isNullOrUndefined()) {
-            return nullptr;
-        }
-        bool ok = true;
-        ok &= seval_to_native_base_type(rval, value);
-        SE_PRECONDITION2(ok, nullptr, "Error processing arguments");
-        return nullptr;
-    }
-
-    static napi_value napiSetPostMessageFunction(napi_env env, napi_callback_info info);
-    // Napi export
-    static bool exportFunctions(napi_env env, napi_value exports);
-
-    static void postStringMessageToUIThread(const std::string& type, std::string param) {
-        if (!_postMsg2UIThreadCb) {
-            return;
-        }
-        CC_UNUSED bool ok = true;
-        se::Value value;
-        ok &= std_string_to_seval(param, &value);
-        _postMsg2UIThreadCb(type, value);
-    }
-
-    static void postIntMessageToUIThread(const std::string& type, int param) {
-        if (!_postMsg2UIThreadCb) {
-            return;
-        }
-        CC_UNUSED bool ok = true;
-        se::Value value;
-        ok &= native_int_to_se(param, value, nullptr /*ctx*/);
-        _postMsg2UIThreadCb(type, value);
-    }
-
-    static void postUnorderedMapMessageToUIThread(const std::string& type, std::unordered_map<std::string, cocos2d::Value> param) {
-        if (!_postMsg2UIThreadCb) {
-            return;
-        }
-        CC_UNUSED bool ok = true;
-        se::Value value;
-        ok &= native_unorderedmap_to_se(param, value, nullptr /*ctx*/);
-        _postMsg2UIThreadCb(type, value);
-    }
-
-public:
-    using PostMessage2UIThreadCb = std::function<void(const std::string&, const se::Value&)>;
-    static PostMessage2UIThreadCb _postMsg2UIThreadCb;
-    using PostSyncMessage2UIThreadCb = std::function<void(const std::string&, const se::Value&, se::Value*)>;
-    static PostSyncMessage2UIThreadCb _postSyncMsg2UIThreadCb;
+    static Napi::Env getWorkerEnv();
+    static Napi::Object init(Napi::Env env, Napi::Object exports);
+    static Napi::Value napiCallFunction(const char* functionName);
+    static Napi::Value napiCallFunction(const char *functionName,float duration);
+    static Napi::Value napiCallFunction(const char *functionName, const std::string& str);
+    static void postMessageToUIThread(const std::string
+                                                              &type,
+                                                          Napi::Value param);
+    static Napi::Value postSyncMessageToUIThread(const std::string& type, Napi::Value param);
 };
 
+class JSFunction {
+public:
+    napi_env env;
+    napi_threadsafe_function saveFunc;
+
+public: 
+    static std::unordered_map<std::string, JSFunction> FUNCTION_MAP;  
+
+    explicit JSFunction(napi_env env, napi_threadsafe_function save_func)
+        : env(env),  saveFunc(save_func){}
+
+    static JSFunction getFunction(std::string functionName)
+    {
+        return FUNCTION_MAP.at(functionName);
+    }
+
+    static void addFunction(std::string name, JSFunction jsFunction) {
+        FUNCTION_MAP.emplace(name, jsFunction);
+    }
+    
+    void invoke(CallParam *callParam) {
+        napi_status status;
+        status = napi_acquire_threadsafe_function(saveFunc);
+        if (status != napi_ok) {
+            LOGW("invokeAsync napi_acquire_threadsafe_function fail,status=%{public}d", status);
+            return;
+        }
+        
+        status = napi_call_threadsafe_function(saveFunc, callParam, napi_tsfn_blocking);
+        if (status != napi_ok) {
+            LOGW("invokeAsync napi_call_threadsafe_function fail,status=%{public}d", status);
+            return;
+        }
+    }
+    
+    static void CallJS(napi_env env, napi_value js_cb, void *context, void *data) {
+        CallParam *callParam = (CallParam*) (data);
+        if(callParam->isSync){
+            CallJsSync(env, js_cb, context, data);
+        } else{
+            CallJsAsync(env, js_cb, context, data);
+        }
+    }
+    
+    static void CallJsAsync(napi_env env, napi_value js_cb, void *context, void *data) {
+        CallParam *callParam = (CallParam*) (data);
+        if (callParam == nullptr) {
+            LOGW("CallJS AsyncCallParam callParam is null");
+            return;
+        }
+        
+        napi_status status;
+        
+        auto callback = [](napi_env env, napi_callback_info info) -> napi_value {
+            size_t argc = 1;
+            napi_value args[1] = {};
+            void *param_in = nullptr;
+            napi_get_cb_info(env, info, &argc, args, nullptr, &param_in);
+            
+            napi_value return_val;
+            napi_get_undefined(env, &return_val);
+            
+            CallParam *callbackParam = reinterpret_cast<CallParam *>(param_in);
+            if (callbackParam == nullptr) {
+                LOGW("CallJS AsyncCallParam callbackParam is null");
+                return return_val;
+            }
+            
+            napi_valuetype type;
+            napi_typeof(env, args[0], &type);
+            
+            CallbackParamType callbackValue;
+            
+            if (type == napi_string) {
+                std::string resultStr;
+                NapiValueConverter::ToCppValue(env, args[0], resultStr);
+                callbackValue = std::move(resultStr);
+            } else if (type == napi_number) {
+                double resultNum;
+                NapiValueConverter::ToCppValue(env, args[0], resultNum);
+                callbackValue = resultNum;
+            } else if (type == napi_boolean) {
+                bool resultBol;
+                NapiValueConverter::ToCppValue(env, args[0], resultBol);
+                callbackValue = resultBol;
+            } else {
+                callbackValue = "unknown";
+                LOGW("callbackValue returns incorrect value type");
+            }
+            callbackParam->cb(callbackValue);
+            return return_val;
+        };
+        
+        napi_value callbackFunc = nullptr;
+        status = napi_create_function(env, "callbackFunc", NAPI_AUTO_LENGTH, callback, callParam, &callbackFunc);
+        if (status != napi_ok) {
+            LOGW("CallJS napi_create_function fail,status=%{public}d", status);
+            return;
+        }
+
+        napi_value result;
+        status = napi_load_module_with_info(env, callParam->clsPath, callParam->module_info, &result);
+        if (status != napi_ok) {
+            LOGW("callNativeMethod napi_load_module_with_info fail, status=%{public}d", status);
+            return;
+        }
+
+        napi_value callFunc;
+        status = napi_get_named_property(env, result, callParam->method, &callFunc);
+        if (status != napi_ok) {
+            LOGW("callNativeMethod napi_get_named_property fail, status=%{public}d", status);
+            return;
+        }
+
+        napi_value jsArgs[3] = {callFunc, NapiValueConverter::ToNapiValue(env, callParam->paramStr), callbackFunc};
+        napi_value return_val;
+        napi_value global;
+        status = napi_get_global(env, &global);
+        if (status != napi_ok) {
+            LOGW("CallJS napi_get_global fail,status=%{public}d", status);
+        }
+        
+        status = napi_call_function(env, global, js_cb, 3, jsArgs, &return_val);
+        if (status != napi_ok) {
+            LOGW("CallJS napi_call_function fail,status=%{public}d", status);
+        }
+    }
+
+    static void CallJsSync(napi_env env, napi_value js_cb, void *context, void *data) {
+        CallParam *callParam = (CallParam *)(data);
+        if (callParam == nullptr) {
+            LOGW("CallJS AsyncCallParam callParam is null");
+            return;
+        }
+
+        napi_status status;
+        napi_value result;
+        status = napi_load_module_with_info(env, callParam->clsPath, callParam->module_info, &result);
+        if (status != napi_ok) {
+            LOGW("callNativeMethod napi_load_module_with_info fail, status=%{public}d", status);
+            return;
+        }
+
+        napi_value callFunc;
+        status = napi_get_named_property(env, result, callParam->method, &callFunc);
+        if (status != napi_ok) {
+            LOGW("callNativeMethod napi_get_named_property fail, status=%{public}d", status);
+            return;
+        }
+
+        napi_value jsArgs[2] = {callFunc, NapiValueConverter::ToNapiValue(env, callParam->paramStr)};
+        napi_value return_val;
+        napi_value global;
+        status = napi_get_global(env, &global);
+        if (status != napi_ok) {
+            LOGW("CallJS napi_get_global fail,status=%{public}d", status);
+        }
+
+        status = napi_call_function(env, global, js_cb, 2, jsArgs, &return_val);
+
+        napi_valuetype type;
+        napi_typeof(env, return_val, &type);
+
+        CallbackParamType callbackValue;
+
+        if (type == napi_string) {
+            std::string resultStr;
+            NapiValueConverter::ToCppValue(env, return_val, resultStr);
+            callbackValue = std::move(resultStr);
+        } else if (type == napi_number) {
+            double resultNum;
+            NapiValueConverter::ToCppValue(env, return_val, resultNum);
+            callbackValue = resultNum;
+        } else if (type == napi_boolean) {
+            bool resultBol;
+            NapiValueConverter::ToCppValue(env, return_val, resultBol);
+            callbackValue = resultBol;
+        } else {
+            callbackValue = "unknown";
+            LOGW("callbackValue returns incorrect value type");
+        }
+        callParam->cb(callbackValue);
+
+        if (status != napi_ok) {
+            LOGW("CallJS napi_call_function fail,status=%{public}d", status);
+        }
+    }
+};
 }

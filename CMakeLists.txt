@@ -19,17 +19,25 @@ set(ENGINE_NAME cocos_engine)
 # set(CMAKE_CXX_FLAGS "${WERROR_FLAGS}")
 
 ################################# options ############################################
-option(CC_USE_GFX_RENDERER         "GFX Render"                         ON)
-option(CC_USE_VIDEO                "Enable VideoPlayer Component"       ON)
-option(CC_USE_WEBVIEW              "Enable WebView Component"           ON)
-option(CC_USE_AUDIO                "Enable Audio"                       ON)
-option(CC_USE_SOCKET               "Enable WebSocket & SocketIO"        ON)
-option(CC_USE_WEBSOCKET_SERVER     "Enable WebSocket Server"            OFF)
-option(CC_USE_MIDDLEWARE           "Enable Middleware"                  ON)
-option(CC_USE_SPINE                "Enable Spine"                       ON)
-option(CC_USE_DRAGONBONES          "Enable Dragonbones"                 ON)
-option(CC_USE_SE_NAPI              "Enable Dragonbones"                 ON)
-option(CC_USE_PARTICLE             "Enable Particle"                    ON)
+macro(cc_set_if_undefined varname value)
+    if(NOT DEFINED ${varname})
+        set(${varname} ${value})
+    endif()
+endmacro()
+
+cc_set_if_undefined(CC_USE_GFX_RENDERER ON)
+cc_set_if_undefined(CC_USE_VIDEO ON)
+cc_set_if_undefined(CC_USE_WEBVIEW ON)
+cc_set_if_undefined(CC_USE_AUDIO ON)
+cc_set_if_undefined(CC_USE_SOCKET ON)
+cc_set_if_undefined(CC_USE_WEBSOCKET_SERVER OFF)
+cc_set_if_undefined(CC_USE_MIDDLEWARE ON)
+cc_set_if_undefined(CC_USE_SPINE ON)
+cc_set_if_undefined(CC_USE_DRAGONBONES ON)
+cc_set_if_undefined(CC_USE_PARTICLE ON)
+cc_set_if_undefined(CC_USE_SE_NAPI OFF)
+cc_set_if_undefined(CC_USE_SE_JSVM ON)
+cc_set_if_undefined(CC_USE_SE_V8 OFF)
 
 
 ################################# external source code ################################
@@ -59,6 +67,7 @@ list(APPEND CC_COCOS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/FileUtils-openharmony.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/CCGL-openharmony.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/CCDevice-openharmony.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/CCDevice-openharmonySensor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/OpenHarmonyPlatform.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/OpenHarmonyPlatform.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/render/egl_core.cpp
@@ -77,6 +86,14 @@ list(APPEND CC_COCOS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/CCStdC.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/AppDelegate.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/AppDelegate.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/NapiInit.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/NapiHelper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/NapiHelper.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/NapiValueConverter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/NapiValueConverter.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/native_common.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/napi.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/napi-inl.h
 )
 
 ##### base
@@ -218,14 +235,56 @@ list(APPEND CC_COCOS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/Value.hpp
 )
 
+##### v8 script engine
+if(CC_USE_SE_V8)
+list(APPEND CC_COCOS_SOURCES 
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/Base.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/Class.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/Class.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/HelperMacros.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/Object.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/Object.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/ObjectWrap.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/ObjectWrap.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/ScriptEngine.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/ScriptEngine.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/SeApi.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/Utils.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/base64.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/env.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/http_parser.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/inspector_agent.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/inspector_io.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/inspector_socket.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/inspector_socket_server.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/node.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/node_debug_options.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/node_mutex.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/SHA1.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/util-inl.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/util.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/v8_inspector_protocol_json.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/env.cc
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/http_parser.c
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/inspector_agent.cc
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/inspector_io.cc
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/inspector_socket.cc
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/inspector_socket_server.cc
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/node.cc
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/node_debug_options.cc
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/SHA1.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8/debugger/util.cc
+)
+endif ()
+
 ##### napi script engine
+if(CC_USE_SE_NAPI)
 list(APPEND CC_COCOS_SOURCES 
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/Class.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/Class.h
-    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/CommonHeader.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/HelperMacros.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/HelperMacros.h
-    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/native_common.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/Object.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/Object.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/ScriptEngine.cpp
@@ -233,10 +292,27 @@ list(APPEND CC_COCOS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/SeApi.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/Utils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/Utils.h
-    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/NapiHelper.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/NapiHelper.h
-    ${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi/NapiInit.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi/CommonHeader.h
 )
+endif ()
+
+##### jsvm script engine
+if(CC_USE_SE_JSVM)
+list(APPEND CC_COCOS_SOURCES 
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/Class.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/Class.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/HelperMacros.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/HelperMacros.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/Object.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/Object.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/ScriptEngine.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/ScriptEngine.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/SeApi.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/Utils.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/Utils.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm/CommonHeader.h
+)
+endif ()
 
 ##### CCDevice CCApplication modules:screen、system
 list(APPEND CC_COCOS_SOURCES 
@@ -298,6 +374,8 @@ list(APPEND CC_COCOS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/manual/jsb_websocket.hpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/manual/jsb_socketio.hpp
     ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/manual/jsb_websocket_server.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/manual/JavaScriptArkTsBridge.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/manual/JavaScriptArkTsBridge.h
 )
 
 ##### canvas rendering
@@ -317,6 +395,13 @@ list(APPEND CC_COCOS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/cocos/ui/edit-box/EditBox-openharmony.h
     ${CMAKE_CURRENT_LIST_DIR}/cocos/ui/edit-box/EditBox-openharmony.cpp
 )
+
+##### videoplayer
+list(APPEND CC_COCOS_SOURCES 
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/ui/videoplayer/VideoPlayer-openharmony.h
+    ${CMAKE_CURRENT_LIST_DIR}/cocos/ui/videoplayer/VideoPlayer-openharmony.cpp
+)
+
 
 ##### editor-support
 list(APPEND CC_COCOS_SOURCES 
@@ -790,8 +875,6 @@ if(CC_USE_AUDIO)
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/OpenSLHelper.h
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/PcmAudioPlayer.cpp
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/PcmAudioPlayer.h
-        ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/PcmAudioService.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/PcmAudioService.h
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/PcmBufferProvider.cpp
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/PcmBufferProvider.h
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/PcmData.cpp
@@ -800,8 +883,6 @@ if(CC_USE_AUDIO)
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/tinysndfile.h
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/Track.cpp
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/Track.h
-        ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/UrlAudioPlayer.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/UrlAudioPlayer.h
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/audio_utils/format.c
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/audio_utils/minifloat.cpp
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/audio_utils/primitives.c
@@ -815,6 +896,10 @@ if(CC_USE_AUDIO)
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/utils/Errors.h
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/utils/Utils.cpp
         ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/android/utils/Utils.h
+        ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/openharmony/PcmAudioService.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/openharmony/PcmAudioService.h
+        ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/openharmony/UrlAudioPlayer.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/cocos/audio/openharmony/UrlAudioPlayer.h
     )
 endif() # USE_AUDIO
 
@@ -869,7 +954,7 @@ function(cc_apply_definations target)
     target_compile_definitions(${target} PUBLIC
         $<IF:$<BOOL:${CC_USE_GFX_RENDERER}>,USE_GFX_RENDERER=1,USE_GFX_RENDERER=0>
         $<IF:$<BOOL:${CC_USE_VIDEO}>,USE_VIDEO=1,USE_VIDEO=0>
-        $<IF:$<BOOL:${CC_USE_WEBVIEW}>,USE_WEBVIEW=1,USE_WEBVIEW=0>
+        $<IF:$<BOOL:${CC_USE_WEBVIEW}>,USE_WEB_VIEW=1,USE_WEB_VIEW=0>
         $<IF:$<BOOL:${CC_USE_AUDIO}>,USE_AUDIO=1,USE_AUDIO=0>
         $<IF:$<BOOL:${CC_USE_SOCKET}>,USE_SOCKET=1,USE_SOCKET=0>
         $<IF:$<BOOL:${CC_USE_WEBSOCKET_SERVER}>,USE_WEBSOCKET_SERVER=1,USE_WEBSOCKET_SERVER=0>
@@ -878,6 +963,8 @@ function(cc_apply_definations target)
         $<IF:$<BOOL:${CC_USE_DRAGONBONES}>,USE_DRAGONBONES=1,USE_DRAGONBONES=0>
         $<IF:$<BOOL:${CC_USE_SE_NAPI}>,USE_SE_NAPI=1,USE_SE_NAPI=0>
         $<IF:$<BOOL:${CC_USE_PARTICLE}>,USE_PARTICLE=1,USE_PARTICLE=0>
+        $<IF:$<BOOL:${CC_USE_SE_V8}>,USE_SE_V8=1,USE_SE_V8=0>
+        $<IF:$<BOOL:${CC_USE_SE_JSVM}>,USE_SE_JSVM=1,USE_SE_JSVM=0>
     )
 endfunction()
 
@@ -904,5 +991,11 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrap
 include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/storage/local-storage)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/ui/edit-box)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/ui/webview)
-include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/platform/openharmony/napi)
+if(CC_USE_SE_NAPI)
+    include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/napi)
+elseif(CC_USE_SE_JSVM)
+    include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/jsvm)
+else()
+    include_directories(${CMAKE_CURRENT_LIST_DIR}/cocos/scripting/js-bindings/jswrapper/v8)
+endif()

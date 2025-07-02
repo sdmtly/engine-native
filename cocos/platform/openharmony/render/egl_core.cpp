@@ -24,6 +24,7 @@
 ****************************************************************************/
 
 #include "egl_core.h"
+#include "HelperMacros.h"
 #include "platform/openharmony/napi/NapiHelper.h"
 
 EGLConfig getConfig(int version, EGLDisplay eglDisplay) {
@@ -110,4 +111,27 @@ bool EGLCore::checkGlError(const char* op)
         return true;
     }
     return false;
+}
+
+void EGLCore::destroySurface() {
+    if(!eglMakeCurrent(mEGLDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT)) {
+        LOGE("eglMakeCurrent error = %{public}d", eglGetError());
+    }
+    eglDestroySurface(mEGLDisplay, mEGLSurface);
+    mEGLSurface = nullptr;
+}
+
+void EGLCore::createSurface(void* window) {
+    mEglWindow = (EGLNativeWindowType)(window);
+    if(mEglWindow) {
+        mEGLSurface = eglCreateWindowSurface(mEGLDisplay, mEGLConfig, mEglWindow, NULL);
+        if(mEGLSurface == nullptr) {
+            LOGE("EGL eglCreateWindowSurface eglSurface is null");
+            return;
+        }
+    }
+    if(!(eglMakeCurrent(mEGLDisplay, mEGLSurface, mEGLSurface, mEGLContext))){
+        LOGE("eglMakeCurrent error = %{public}d", eglGetError());
+    }
+    return;
 }

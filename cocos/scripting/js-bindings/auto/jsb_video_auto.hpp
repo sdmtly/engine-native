@@ -34,4 +34,4 @@ SE_DECLARE_FUNC(js_video_VideoPlayer_setVisible);
 SE_DECLARE_FUNC(js_video_VideoPlayer_swapUpToCanvasApp);    //kennys
 SE_DECLARE_FUNC(js_video_VideoPlayer_VideoPlayer);
 
-#endif //#if (USE_VIDEO > 0) && (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID || CC_TARGET_PLATFORM == CC_PLATFORM_IOS) && !defined(CC_TARGET_OS_TVOS)
+#endif //#if (USE_VIDEO > 0) && (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID || CC_TARGET_PLATFORM == CC_PLATFORM_OPENHARMONY || CC_TARGET_PLATFORM == CC_PLATFORM_IOS) && !defined(CC_TARGET_OS_TVOS)

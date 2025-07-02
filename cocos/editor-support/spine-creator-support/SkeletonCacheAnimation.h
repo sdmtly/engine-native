@@ -39,7 +39,7 @@ namespace spine {
     
     class CacheModeAttachUtil;
     
-    class SkeletonCacheAnimation : public cocos2d::middleware::IMiddleware, public cocos2d::Ref {
+    class SkeletonCacheAnimation : public cocos2d::Ref, public cocos2d::middleware::IMiddleware {
     public:
         SkeletonCacheAnimation (const std::string& uuid, bool isShare);
         virtual ~SkeletonCacheAnimation ();
@@ -93,6 +93,7 @@ namespace spine {
         void setToSetupPose ();
         void setBonesToSetupPose ();
         void setSlotsToSetupPose ();
+        void destroy();
     private:
         float _timeScale = 1;
         bool _paused = false;

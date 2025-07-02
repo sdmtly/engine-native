@@ -26,12 +26,17 @@ THE SOFTWARE.
 #pragma once
 
 #include "audio/android/utils/Errors.h"
-
+#include "platform/CCPlatformConfig.h"
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
 #include <vector>
+
+#if CC_TARGET_PLATFORM == CC_PLATFORM_OPENHARMONY
+// for openharmony platform, buffer size is 4458 in normal latency mode, 240 in fast latency mode
+#define MAX_AUDIO_BUFFER_SIZE 4458
+#endif
 
 namespace cocos2d { 
 
@@ -47,12 +52,17 @@ public:
         void* buf;
         size_t size;
     };
-
+    
+#if CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID
     AudioMixerController(int bufferSizeInFrames, int sampleRate, int channelCount);
+    bool init();
+#elif CC_TARGET_PLATFORM == CC_PLATFORM_OPENHARMONY
+    AudioMixerController(int sampleRate, int channelCount);
+    void updateBufferSize(int bufferSize);
+    bool init(int bufferSizeInFrames);
+#endif
 
     ~AudioMixerController();
-
-    bool init();
 
     bool addTrack(Track* track);
     bool hasPlayingTacks();
