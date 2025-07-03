@@ -96,6 +96,12 @@ float
 {
 },
 
+//kennys
+swapUpToCanvasApp: function (
+)
+{
+},
+
 /**
  * @method play
  */

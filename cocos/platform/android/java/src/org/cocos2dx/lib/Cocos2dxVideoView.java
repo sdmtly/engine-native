@@ -260,7 +260,11 @@ public class Cocos2dxVideoView extends SurfaceView {
         if ((event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_UP) {
             this.sendEvent(EVENT_CLICKED);
         }
-        return true;
+        
+        // kennys 因为video 显示到canvas下边了。所以没必要拦截点击  start
+        // return true;
+        return false; 		
+        //end
     }
 
     // ===========================================================

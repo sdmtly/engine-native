@@ -271,31 +271,58 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
         mEditBox = new Cocos2dxEditBox(this, mFrameLayout);
 
         // Set frame layout as the content view
+
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+                    | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(Color.TRANSPARENT);
+        }
+
+//        Window window = getWindow();
+////这一步最好要做，因为如果这两个flag没有清除的话下面没有生效
+//        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS
+//                | WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+//        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+//        window.setStatusBarColor(Color.TRANSPARENT);
+//        window.setNavigationBarColor(Color.TRANSPARENT);
+
+
         setContentView(mFrameLayout);
 
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        try {
-            Field field = lp.getClass().getField("layoutInDisplayCutoutMode");
-            //Field constValue = lp.getClass().getDeclaredField("LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER");
-            Field constValue = lp.getClass().getDeclaredField("LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES");
-            field.setInt(lp, constValue.getInt(null));
-            
-            // https://developer.android.com/training/system-ui/immersive
-            int flag = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+//        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
+//            // 设置Window状态栏全透明
+//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//        }
 
-            flag |= View.class.getDeclaredField("SYSTEM_UI_FLAG_IMMERSIVE_STICKY").getInt(null);
-            View view = getWindow().getDecorView();
-            view.setSystemUiVisibility(flag);
-
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
+//        WindowManager.LayoutParams lp = getWindow().getAttributes();
+//        try {
+//            Field field = lp.getClass().getField("layoutInDisplayCutoutMode");
+//            //Field constValue = lp.getClass().getDeclaredField("LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER");
+//            Field constValue = lp.getClass().getDeclaredField("LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES");
+//            field.setInt(lp, constValue.getInt(null));
+//
+//            // https://developer.android.com/training/system-ui/immersive
+//            int flag = //View.SYSTEM_UI_FLAG_HIDE_NAVIGATION        //去掉隐藏导航栏，跟随系统 by kennys
+//                     View.SYSTEM_UI_FLAG_FULLSCREEN
+//                    //| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION  //去掉隐藏导航栏，跟随系统 by kennys
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+//
+//            flag |= View.class.getDeclaredField("SYSTEM_UI_FLAG_IMMERSIVE_STICKY").getInt(null);
+//            View view = getWindow().getDecorView();
+//            view.setSystemUiVisibility(flag);
+//
+//        } catch (NoSuchFieldException e) {
+//            e.printStackTrace();
+//        } catch (IllegalAccessException e) {
+//            e.printStackTrace();
+//        }
 
         if (getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_SENSOR) {
             mCocos2dxOrientationHelper = new Cocos2dxOrientationHelper(this);
@@ -356,7 +383,7 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
 
         Utils.setActivity(this);
 
-        Utils.hideVirtualButton();
+        // Utils.hideVirtualButton();      //去掉隐藏导航栏，跟随系统 by kennys
 
         Cocos2dxHelper.registerBatteryLevelReceiver(this);
 
@@ -380,8 +407,11 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
         }
 
         Window window = this.getWindow();
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        // window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);    //kennys 修复android 输入框被遮挡的bug
         this.setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
+        // kennys  修复 安卓不激活输入框的情况下，点击返回键闪退
+        this.mGLSurfaceView.requestFocus();
     }
 
     @Override
@@ -391,7 +421,7 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
         super.onResume();
         if(gainAudioFocus)
             Cocos2dxAudioFocusManager.registerAudioFocusListener(this);
-        Utils.hideVirtualButton();
+        // Utils.hideVirtualButton();      //去掉隐藏导航栏，跟随系统 by kennys
        	resumeIfHasFocus();
         if (null != mCocos2dxOrientationHelper) {
             mCocos2dxOrientationHelper.onResume();
@@ -409,7 +439,7 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
 
     private void resumeIfHasFocus() {
         if(hasFocus && !paused) {
-            Utils.hideVirtualButton();
+            // Utils.hideVirtualButton();      //去掉隐藏导航栏，跟随系统 by kennys
             Cocos2dxHelper.onResume();
             mGLSurfaceView.onResume();
         }

@@ -106,10 +106,38 @@ namespace
     cocos2d::Device::Rotation rotation = cocos2d::Device::Rotation::_0;
     UIDevice * device = [UIDevice currentDevice];
     
+
+    //横竖屏切换适配 kennys  start
+    auto orientation = UIDeviceOrientationLandscapeRight;
+    
+    if (@available(iOS 16.0, *)) {
+        // iOS16 需要使用 UIWindowScene 来区分横竖屏
+        NSArray *array = [[[UIApplication sharedApplication] connectedScenes] allObjects];
+        UIWindowScene *scene = [array firstObject];
+        
+        if (scene.interfaceOrientation == UIInterfaceOrientationPortrait) {
+            orientation = UIDeviceOrientationPortrait;
+        } else if (scene.interfaceOrientation == UIInterfaceOrientationLandscapeLeft) {
+            orientation = UIDeviceOrientationLandscapeLeft;
+        } else if (scene.interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown) {
+            orientation = UIDeviceOrientationPortraitUpsideDown;
+        } else if (scene.interfaceOrientation == UIInterfaceOrientationLandscapeRight) {
+            orientation = UIDeviceOrientationLandscapeRight;
+        }
+
+    } else {
+        // 这里是 UIDeviceOrientationLandscapeLeft（我们需要 Home 按键在右边）
+        // UIDeviceOrientationLandscapeLeft,       // Device oriented horizontally, home button on the right
+        orientation = device.orientation;
+    }
+    //横竖屏切换适配 kennys  end
+
     // NOTE: https://developer.apple.com/documentation/uikit/uideviceorientation
     // when the device rotates to LandscapeLeft, device.orientation returns UIDeviceOrientationLandscapeRight
     // when the device rotates to LandscapeRight, device.orientation returns UIDeviceOrientationLandscapeLeft
-    switch(device.orientation)
+    
+    // switch(device.orientation) //kennys
+    switch(orientation)
     {
         case UIDeviceOrientationPortrait:
             rotation = cocos2d::Device::Rotation::_0;
@@ -135,6 +163,17 @@ namespace
     float scale = [[UIScreen mainScreen] scale];
     float width = bounds.size.width * scale;
     float height = bounds.size.height * scale;
+    
+    //验证是否横竖屏,因为可能会收到错误的信息，因此需要验证 kennys start
+    if (width > height && (orientation == UIDeviceOrientationPortrait || orientation == UIDeviceOrientationPortraitUpsideDown)) {
+        return;
+    }
+    
+    if (height > width && (orientation == UIDeviceOrientationLandscapeLeft || orientation == UIDeviceOrientationLandscapeRight)) {
+        return;
+    }
+    //验证是否横竖屏 kennys end
+    
     cocos2d::Application::getInstance()->updateViewSize(width, height);
 }
 
@@ -424,11 +463,12 @@ bool Application::openURL(const std::string &url)
 {
     NSString* msg = [NSString stringWithCString:url.c_str() encoding:NSUTF8StringEncoding];
     NSURL* nsUrl = [NSURL URLWithString:msg];
-    return [[UIApplication sharedApplication] openURL:nsUrl];
+    [[UIApplication sharedApplication] openURL:nsUrl options:nil completionHandler:nil];
+    return true;
 }
 
 void Application::copyTextToClipboard(const std::string &text)
-{
+{	
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     pasteboard.string = [NSString stringWithCString:text.c_str() encoding:NSUTF8StringEncoding];
 }
@@ -458,7 +498,7 @@ void Application::setMultitouch(bool value)
 
 void Application::onCreateView(PixelFormat& pixelformat, DepthFormat& depthFormat, int& multisamplingCount)
 {
-    pixelformat = PixelFormat::RGB565;
+    pixelformat = PixelFormat::RGBA8;//PixelFormat::RGB565;  kennys
     depthFormat = DepthFormat::DEPTH24_STENCIL8;
 
     multisamplingCount = 0;
