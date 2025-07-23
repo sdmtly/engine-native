@@ -58,6 +58,24 @@ bool AppDelegate::applicationDidFinishLaunching()
     se->setExceptionCallback([](const char *location, const char *message, const char *stack) {
         // Send exception information to server like Tencent Bugly.
         cocos2d::log("\nUncaught Exception:\n - location :  %s\n - msg : %s\n - detail : \n      %s\n", location, message, stack);
+    
+        std::string script = "if (window.onerror) { window.onerror('";
+
+        std::string msgStr = std::string(message);
+        std::string stackStr = std::string(stack);
+
+        int pos = stackStr.find("\n",0);
+        std::replace(stackStr.begin(), stackStr.end(), '\n', ';');
+
+        script += msgStr;
+        script += "', '', 0, 0, '" + msgStr + ";" + stackStr + "'); } ";
+
+//        cocos2d::log("errorScript:%s",script.c_str());
+
+//        Application::getInstance()->getScheduler()->performFunctionInCocosThread([=](){
+            se::ScriptEngine::getInstance()->evalString(script.c_str());
+//        });
+    
     });
     
     jsb_register_all_modules();
