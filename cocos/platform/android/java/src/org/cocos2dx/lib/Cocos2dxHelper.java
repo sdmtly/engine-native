@@ -624,43 +624,67 @@ public class Cocos2dxHelper {
     }
 
     public static float[] getSafeArea() {
+        int top = 0, left = 0, bottom = 0, right = 0;
+        
+        Activity activity = getActivity();
+        if (activity == null) return new float[]{0, 0, 0, 0};
 
-        if (android.os.Build.VERSION.SDK_INT >= 28) {
+        try {
+            // 获取当前方向
+            boolean isLandscape = activity.getResources().getConfiguration().orientation 
+                                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 
-            do {
-                Object windowInsectObj = getActivity().getWindow().getDecorView().getRootWindowInsets();
+            // 1. 优先读取系统原生 Insets (涵盖标准的挖孔/刘海/导航栏数据)
+            if (android.os.Build.VERSION.SDK_INT >= 23) {
+                android.view.WindowInsets windowInsets = activity.getWindow().getDecorView().getRootWindowInsets();
+                if (windowInsets != null) {
+                    bottom = windowInsets.getSystemWindowInsetBottom();
 
-                if(windowInsectObj == null) break;
-
-                Class<?> windowInsets = WindowInsets.class;
-                try {
-                    Method wiGetDisplayCutout = windowInsets.getMethod("getDisplayCutout");
-                    Object cutout = wiGetDisplayCutout.invoke(windowInsectObj);
-
-                    if(cutout == null) break;
-
-                    Class<?> displayCutout = cutout.getClass();
-                    Method dcGetLeft = displayCutout.getMethod("getSafeInsetLeft");
-                    Method dcGetRight = displayCutout.getMethod("getSafeInsetRight");
-                    Method dcGetBottom = displayCutout.getMethod("getSafeInsetBottom");
-                    Method dcGetTop = displayCutout.getMethod("getSafeInsetTop");
-
-                    if (dcGetLeft != null && dcGetRight != null && dcGetBottom != null && dcGetTop != null) {
-                        int left = (Integer) dcGetLeft.invoke(cutout);
-                        int right = (Integer) dcGetRight.invoke(cutout);
-                        int top = (Integer) dcGetTop.invoke(cutout);
-                        int bottom = (Integer) dcGetBottom.invoke(cutout);
-                        return new float[]{top, left, bottom, right};
+                    // 读取刘海/打孔屏 Cutout 数据
+                    if (android.os.Build.VERSION.SDK_INT >= 28) {
+                        java.lang.reflect.Method wiGetDisplayCutout = android.view.WindowInsets.class.getMethod("getDisplayCutout");
+                        Object cutout = wiGetDisplayCutout.invoke(windowInsets);
+                        if (cutout != null) {
+                            Class<?> displayCutout = cutout.getClass();
+                            top = Math.max(top, (Integer) displayCutout.getMethod("getSafeInsetTop").invoke(cutout));
+                            left = Math.max(left, (Integer) displayCutout.getMethod("getSafeInsetLeft").invoke(cutout));
+                            right = Math.max(right, (Integer) displayCutout.getMethod("getSafeInsetRight").invoke(cutout));
+                            bottom = Math.max(bottom, (Integer) displayCutout.getMethod("getSafeInsetBottom").invoke(cutout));
+                        }
                     }
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
                 }
-            }while(false);
+            }
+
+            // 2. 防双重挤压 & 贴边防呆设计
+            android.util.DisplayMetrics realMetrics = new android.util.DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getRealMetrics(realMetrics);
+            
+            android.graphics.Rect visibleFrame = new android.graphics.Rect();
+            activity.getWindow().getDecorView().getWindowVisibleDisplayFrame(visibleFrame);
+            
+            // 计算屏幕物理底边和游戏画布底边的距离
+            int bottomPhysicalOcclusion = realMetrics.heightPixels - visibleFrame.bottom;
+
+            if (bottomPhysicalOcclusion > 0) {
+                // 情况 A：画布被底部的实体/虚拟按键托起，底端留白强制为 0
+                bottom = 0;
+            } else {
+                // 情况 B：画布紧贴屏幕物理最底端 (全面屏手势模式)
+                if (!isLandscape) {
+                    // 【竖屏】：纵向空间充裕，补足 20dp 的基础安全高度防止误触小白条
+                    int minSafePadding = (int) (20 * realMetrics.density);
+                    if (bottom < minSafePadding) {
+                        bottom = minSafePadding;
+                    }
+                }
+                // 【横屏】：纵向空间极其宝贵，且横屏手势条极细，无需强加额外的底部留白。
+                // 因此这里不写 else 分支，直接保留系统原本返回的值（通常为 0 或者极小的值）。
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return new float[]{0,0,0,0};
+
+        return new float[]{top, left, bottom, right};
     }
 }
