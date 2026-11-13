@@ -54,13 +54,18 @@ void Device::setKeepScreenOn(bool value) {
 }
 
 cocos2d::Vec4 Device::getSafeAreaEdge() {
-    // screen with enabled cutout area
+    // 引擎原有：获取方向和刘海尺寸
     auto value = NapiHelper::napiCallFunction("getDeviceOrientation");
     auto height = NapiHelper::napiCallFunction("getCutoutHeight");
     auto width = NapiHelper::napiCallFunction("getCutoutWidth");
+    
+    // --- 新增：尝试通过 NAPI 获取真实的底部小白条高度（为未来扩展留出接口） ---
+    auto nav_height_val = NapiHelper::napiCallFunction("getNavigationIndicatorHeight");
+
     int32_t orientation = 0;
     int32_t cutout_height = 0;
     int32_t cutout_width = 0;
+    int32_t nav_height = 0;
 
     if (value.IsNumber()) {
         orientation = value.As<Napi::Number>().Int32Value();
@@ -71,18 +76,51 @@ cocos2d::Vec4 Device::getSafeAreaEdge() {
     if (width.IsNumber()) {
         cutout_width = width.As<Napi::Number>().Int32Value();
     }
+    // 读取 ArkTS 层传递的底部高度（如果未在 JS/ETS 注册该函数，会安全跳过）
+    if (nav_height_val.IsNumber()) {
+        nav_height = nav_height_val.As<Napi::Number>().Int32Value();
+    }
+
     float safearea_top = 0.0f;
     float safearea_left = 0.0f;
     float safearea_bottom = 0.0f;
     float safearea_right = 0.0f;
-    if(0 == orientation) {
+
+    // 根据屏幕方向分配安全区
+    if(0 == orientation) { 
+        // 竖屏
         safearea_top += cutout_height;
-    } else if(1 == orientation) {
+        
+        // --- 核心修复：竖屏底部留白逻辑 ---
+        if (nav_height > 0) {
+            safearea_bottom = nav_height;
+        } else {
+            // 像 Android 一样，增加一个通用的 20dp 防呆安全留白
+            float dpi = getDPI(); // 调用同文件中的 getDPI() 方法
+            if (dpi <= 0) dpi = 160.0f; // 容错兜底
+            safearea_bottom = 20.0f * (dpi / 160.0f);
+        }
+        
+    } else if(1 == orientation) { 
+        // 横屏（顺时针旋转）[cite: 5]
         safearea_right += cutout_width;
-    } else if(2 == orientation) {
+        
+        // 横屏寸土寸金，如果没有明确传入小白条真实高度，则不做 20dp 的兜底留白
+        if (nav_height > 0) {
+            safearea_bottom = nav_height;
+        }
+        
+    } else if(2 == orientation) { 
+        // 倒立竖屏
         safearea_bottom += cutout_height;
-    } else if(3 == orientation) {
+        
+    } else if(3 == orientation) { 
+        // 反向横屏
         safearea_left += cutout_width;
+        
+        if (nav_height > 0) {
+            safearea_bottom = nav_height;
+        }
     }
 
     return cocos2d::Vec4(safearea_top, safearea_left, safearea_bottom, safearea_right);
